@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  sentinelai-ueba:
+    build:
+      context: ..
+      dockerfile: docker/ueba/Dockerfile
+    container_name: sentinelai-ueba-engine
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=sentinelai_db
+      - POSTGRES_USER=sentinel_admin
+      - POSTGRES_PASSWORD=secure_password_123
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - sentinelai-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: sentinelai-postgres
+    environment:
+      POSTGRES_DB: sentinelai_db
+      POSTGRES_USER: sentinel_admin
+      POSTGRES_PASSWORD: secure_password_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../migrations/004_ueba_postgresql.sql:/docker-entrypoint-initdb.d/004_ueba.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel_admin -d sentinelai_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinelai-network
+
+networks:
+  sentinelai-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

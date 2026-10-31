@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  sentinel-grc-engine:
+    build:
+      context: ..
+      dockerfile: docker/compliance/Dockerfile
+    container_name: sentinel-compliance-grc
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgres://sentinel:SentinelGRC2026!@postgres-db:5432/sentinel_compliance
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - sentinel-mesh
+
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: sentinel-postgres-compliance
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: SentinelGRC2026!
+      POSTGRES_DB: sentinel_compliance
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../migrations/008_compliance_postgresql.sql:/docker-entrypoint-initdb.d/008_compliance.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel_compliance"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinel-mesh
+
+networks:
+  sentinel-mesh:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,16 @@
+<service>
+  <id>AWMAISOCSeniorEngine</id>
+  <name>AWM AI SOC Senior Engine</name>
+  <description>Enterprise Autonomous AI Security Operations Center Engine Service. Manages real-time SIEM log correlation, EDR endpoint isolation, NDR deep packet inspection, SOAR playbooks, UEBA threat scoring, and Autonomous Response Engine.</description>
+  <executable>node.exe</executable>
+  <argument>dist/server.cjs</argument>
+  <logmode>rotate</logmode>
+  <logpath>C:\ProgramData\AWM-AI-SOC-SENIOR\logs</logpath>
+  <startmode>Automatic</startmode>
+  <delayedAutoStart>true</delayedAutoStart>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="30 sec"/>
+  <env name="NODE_ENV" value="production"/>
+  <env name="PORT" value="3000"/>
+  <env name="AWM_LOG_DIR" value="C:\ProgramData\AWM-AI-SOC-SENIOR\logs"/>
+</service>

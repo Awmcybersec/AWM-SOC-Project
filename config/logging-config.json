@@ -1,0 +1,24 @@
+{
+  "logging": {
+    "level": "INFO",
+    "logDirectory": "C:\\ProgramData\\AWM-AI-SOC-SENIOR\\logs",
+    "files": {
+      "serviceLog": "awm-service.log",
+      "errorLog": "awm-error.log",
+      "auditLog": "awm-audit.log",
+      "siemIngestLog": "awm-siem.log"
+    },
+    "rotation": {
+      "maxSizeBytes": 104857600,
+      "maxBackups": 30,
+      "compressBackups": true
+    },
+    "windowsEventLog": {
+      "enabled": true,
+      "logName": "Application",
+      "sourceName": "AWM-AI-SOC-SENIOR",
+      "minLevel": "WARN"
+    },
+    "retentionDays": 90
+  }
+}

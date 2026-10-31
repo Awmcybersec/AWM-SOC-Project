@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  awm-autonomous-engine:
+    build:
+      context: ..
+      dockerfile: docker/autonomous/Dockerfile
+    container_name: awm-autonomous-engine
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://awm_user:awm_secure_pass@postgres-db:5432/awm_cyber_xdr
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - awm-secnet
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: awm-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: awm_user
+      POSTGRES_PASSWORD: awm_secure_pass
+      POSTGRES_DB: awm_cyber_xdr
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../migrations:/docker-entrypoint-initdb.d
+    networks:
+      - awm-secnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U awm_user -d awm_cyber_xdr"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  awm-secnet:
+    driver: bridge
+
+volumes:
+  pgdata:

@@ -1,0 +1,78 @@
+{
+  "name": "awm-ai-soc-senior",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Enterprise Autonomous AI Security Operations Center.",
+  "author": "AWM AI SOC Team",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --sourcemap --external:vite --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
+    "clean": "rm -rf dist server.cjs dist-electron release",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "windows-build": "node scripts/build-windows.js",
+    "windows-service:install": "powershell -ExecutionPolicy Bypass -File ./windows/scripts/Install-Service.ps1",
+    "windows-service:uninstall": "powershell -ExecutionPolicy Bypass -File ./windows/scripts/Uninstall-Service.ps1",
+    "windows-postgres:init": "powershell -ExecutionPolicy Bypass -File ./windows/scripts/Init-PostgreSQL.ps1"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "groq-sdk": "^1.5.0",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "pg": "^8.22.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "@types/pg": "^8.20.4",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "autoprefixer": "^10.4.21",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3",
+    "vitest": "^4.1.10"
+  },
+  "build": {
+    "appId": "com.awm.ai.soc",
+    "productName": "AWM AI SOC SENIOR",
+    "icon": "public/favicon.ico",
+    "directories": {
+      "output": "release"
+    },
+    "asarUnpack": [
+  "dist/server.cjs",
+  "dist/server.cjs.map",
+  "dist/index.html",
+  "dist/assets/**",
+  "dist/logo.png",
+  "dist/favicon.ico",
+  "config/**",
+  "config/.env"
+],
+    "files": [
+      "dist-electron/**/*",
+      "dist/**/*",
+      "package.json",
+      "config/**/*",
+      "config/.env"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

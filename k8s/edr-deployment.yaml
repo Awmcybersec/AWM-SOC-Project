@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinelai-edr-engine
+  namespace: sentinelai-soc
+  labels:
+    app: sentinelai-edr-engine
+    tier: edr-core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sentinelai-edr-engine
+  template:
+    metadata:
+      labels:
+        app: sentinelai-edr-engine
+    spec:
+      containers:
+        - name: edr-engine
+          image: gcr.io/sentinelai-soc/edr-engine:v2.4.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sentinelai-secrets
+                  key: GEMINI_API_KEY
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2048Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinelai-edr-service
+  namespace: sentinelai-soc
+spec:
+  type: ClusterIP
+  selector:
+    app: sentinelai-edr-engine
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http

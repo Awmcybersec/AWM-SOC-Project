@@ -1,0 +1,11 @@
+declare module "electron" {
+  export const app: any;
+  export const BrowserWindow: any;
+  export const Tray: any;
+  export const Menu: any;
+  export const ipcMain: any;
+  export const ipcRenderer: any;
+  export const shell: any;
+  export const Notification: any;
+  export const contextBridge: any;
+}

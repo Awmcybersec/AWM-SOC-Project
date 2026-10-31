@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  sentinelai-soc-app:
+    build:
+      context: ..
+      dockerfile: docker/soc/Dockerfile
+    container_name: sentinelai-soc-command-center
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgres://sentinel:soc_secure_pass_2026@soc-db:5432/sentinelai_soc
+    depends_on:
+      soc-db:
+        condition: service_healthy
+
+  soc-db:
+    image: postgres:16-alpine
+    container_name: sentinelai-soc-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: soc_secure_pass_2026
+      POSTGRES_DB: sentinelai_soc
+    ports:
+      - "5432:5432"
+    volumes:
+      - soc_pgdata:/var/lib/postgresql/data
+      - ../migrations/010_soc_command_postgresql.sql:/docker-entrypoint-initdb.d/010_soc_command_postgresql.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinelai_soc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  soc_pgdata:

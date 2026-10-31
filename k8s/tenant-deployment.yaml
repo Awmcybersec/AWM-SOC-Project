@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sentinel-saas
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-saas-config
+  namespace: sentinel-saas
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tenant-saas-engine
+  namespace: sentinel-saas
+  labels:
+    app.kubernetes.io/name: tenant-saas-engine
+    app.kubernetes.io/component: saas-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tenant-saas-engine
+  template:
+    metadata:
+      labels:
+        app: tenant-saas-engine
+    spec:
+      containers:
+        - name: saas-engine
+          image: gcr.io/sentinel-secops/tenant-saas-engine:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: tenant-saas-config
+          env:
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sentinel-secrets
+                  key: GEMINI_API_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1536Mi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tenant-saas-service
+  namespace: sentinel-saas
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: tenant-saas-engine

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinelai-ueba-engine
+  namespace: sentinelai-soc
+  labels:
+    app: sentinelai-ueba-engine
+    tier: ueba-core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sentinelai-ueba-engine
+  template:
+    metadata:
+      labels:
+        app: sentinelai-ueba-engine
+    spec:
+      containers:
+        - name: ueba-engine
+          image: gcr.io/sentinelai-soc/ueba-engine:v2.4.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sentinelai-secrets
+                  key: GEMINI_API_KEY
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2048Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinelai-ueba-service
+  namespace: sentinelai-soc
+spec:
+  type: ClusterIP
+  selector:
+    app: sentinelai-ueba-engine
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http

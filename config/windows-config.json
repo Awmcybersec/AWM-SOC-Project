@@ -1,0 +1,44 @@
+{
+  "application": {
+    "name": "AWM AI SOC SENIOR",
+    "version": "1.0.0",
+    "environment": "production",
+    "edition": "Enterprise Windows Server"
+  },
+  "service": {
+    "name": "AWM AI SOC Senior Engine",
+    "serviceName": "AWMAISOCSeniorEngine",
+    "displayName": "AWM AI SOC Senior Security Operations Engine",
+    "description": "Enterprise Autonomous AI Security Operations Center Service. Runs SIEM, EDR, NDR, SOAR, UEBA, Threat Intel, and Autonomous Response Engine.",
+    "startupType": "Automatic",
+    "executable": "node.exe",
+    "script": "dist/server.cjs",
+    "port": 3000,
+    "host": "0.0.0.0",
+    "ssl": {
+      "enabled": true,
+      "certPath": "C:\\ProgramData\\AWM-AI-SOC-SENIOR\\certs\\server.crt",
+      "keyPath": "C:\\ProgramData\\AWM-AI-SOC-SENIOR\\certs\\server.key"
+    }
+  },
+  "osSupport": {
+    "windowsServer": ["2019", "2022", "2025"],
+    "windowsClient": ["10", "11"]
+  },
+  "database": {
+    "type": "postgresql",
+    "host": "localhost",
+    "port": 5432,
+    "database": "awm_ai_soc_db",
+    "user": "awm_soc_admin",
+    "passwordEnvVar": "POSTGRES_PASSWORD",
+    "maxConnections": 50,
+    "autoInit": true
+  },
+  "hardwareRequirements": {
+    "minCpuCores": 4,
+    "minRamGb": 16,
+    "recommendedRamGb": 32,
+    "minDiskSpaceGb": 100
+  }
+}

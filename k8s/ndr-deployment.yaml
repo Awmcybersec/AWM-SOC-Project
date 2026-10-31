@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-ndr-engine
+  namespace: sentinel-soc
+  labels:
+    app.kubernetes.io/name: ndr-engine
+    app.kubernetes.io/part-of: sentinel-ai
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ndr-engine
+  template:
+    metadata:
+      labels:
+        app: ndr-engine
+    spec:
+      containers:
+      - name: ndr-engine
+        image: gcr.io/sentinel-ai-prod/ndr-engine:v1.0.0
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        resources:
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/ndr/stats
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel-ndr-service
+  namespace: sentinel-soc
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  selector:
+    app: ndr-engine
