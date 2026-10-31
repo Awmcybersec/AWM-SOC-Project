@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { windowsLogger } from "../windows/windowsLogger.js";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 export interface PostgresConfig {
@@ -23,23 +24,59 @@ class PostgresManager {
   private pool: Pool;
 
   constructor() {
-    const postgresPassword = process.env.POSTGRES_PASSWORD;
+    const databaseUrl = process.env.DATABASE_URL?.trim();
 
-    if (!postgresPassword || typeof postgresPassword !== "string") {
-      throw new Error(
-        "POSTGRES_PASSWORD environment variable is missing or invalid"
-      );
+    if (databaseUrl) {
+      let parsedUrl: URL;
+
+      try {
+        parsedUrl = new URL(databaseUrl);
+      } catch {
+        throw new Error("DATABASE_URL is not a valid PostgreSQL connection URL");
+      }
+
+      if (
+        parsedUrl.protocol !== "postgres:" &&
+        parsedUrl.protocol !== "postgresql:"
+      ) {
+        throw new Error("DATABASE_URL must use the PostgreSQL protocol");
+      }
+
+      this.config = {
+        host: parsedUrl.hostname,
+        port: parsedUrl.port ? Number(parsedUrl.port) : 5432,
+        database: decodeURIComponent(parsedUrl.pathname.replace(/^\//, "")),
+        user: decodeURIComponent(parsedUrl.username),
+        connected: false,
+      };
+
+      this.pool = new Pool({
+        connectionString: databaseUrl,
+        ssl: {
+          rejectUnauthorized: true,
+        },
+        max: 20,
+        idleTimeoutMillis: 30000,
+      });
+    } else {
+      const postgresPassword = process.env.POSTGRES_PASSWORD;
+
+      if (!postgresPassword || typeof postgresPassword !== "string") {
+        throw new Error(
+          "Set DATABASE_URL or POSTGRES_PASSWORD environment variable"
+        );
+      }
+
+      this.pool = new Pool({
+        host: this.config.host,
+        port: this.config.port,
+        database: this.config.database,
+        user: this.config.user,
+        password: postgresPassword,
+        max: 20,
+        idleTimeoutMillis: 30000,
+      });
     }
-
-    this.pool = new Pool({
-      host: this.config.host,
-      port: this.config.port,
-      database: this.config.database,
-      user: this.config.user,
-      password: postgresPassword,
-      max: 20,
-      idleTimeoutMillis: 30000,
-    });
   }
 
   public async initialize(): Promise<boolean> {
